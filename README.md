@@ -34,5 +34,16 @@ python tests/make_fake_cifti.py out/fake      # makes fake_dtseries / fake_atlas
 pytest
 ```
 
+## Your extraction job (Yousef)
+```
+# 1. do the real scan and the atlas describe the same grayordinates? (must say OK)
+python scripts/check_compat.py --dtseries scan.dtseries.nii --dlabel Glasser360_Subcortex14.dlabel.nii
+# 2. 374 parcel time series for one scan, with sanity checks + cortex baseline check
+python scripts/extract_subject.py --dtseries scan.dtseries.nii \
+    --dlabel Glasser360_Subcortex14.dlabel.nii --lookup parcel_lookup.csv \
+    --glasser-cortex Glasser360_working.dlabel.nii --out outputs/100206_MOTOR_LR
+```
+Outputs go to `outputs/` (gitignored). Atlas files come from Aya (see `atlas/README.md`).
+
 ## Status
 See `docs/decisions.md` for the atlas decision and open questions.

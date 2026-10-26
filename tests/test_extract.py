@@ -38,3 +38,11 @@ def test_size_mismatch_raises(fake, tmp_path):
     _, dl2, _, _ = make(str(tmp_path / "g"), n_vert=25)
     with pytest.raises(ValueError):
         parcellate(dt, dl2)
+
+
+def test_compat_match_and_mismatch(fake, tmp_path):
+    from scripts.check_compat import compare
+    dt, dl, _, _ = fake
+    assert compare(nib.load(dt), nib.load(dl))[1] == []
+    _, dl2, _, _ = make(str(tmp_path / "h"), n_vert=25)
+    assert compare(nib.load(dt), nib.load(dl2))[1] != []
