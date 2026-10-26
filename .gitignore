@@ -1,26 +1,13 @@
-# Data: never commit HCP data (data use terms + GitHub 100 MB limit)
+# Never commit HCP data (data use terms; GitHub 100 MB file limit)
 *.nii
 *.nii.gz
 *.zip
-*.gii
-*.npy
 *.npz
-*.h5
-scratch/
+
+# Local inputs/outputs
+Glasser374_Atlas/
 outputs/
-data/
+run_log.txt
 
-# Local config / secrets
-config.local.yaml
-.env
-*.pem
-
-# Python / notebooks
 __pycache__/
 *.pyc
-.venv/
-.ipynb_checkpoints/
-.pytest_cache/
-
-# Keep the tiny, committed atlas files (re-include after the *.nii rules)
-!atlas/*.dlabel.nii

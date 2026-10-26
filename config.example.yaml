@@ -1,6 +1,0 @@
-# Copy to config.local.yaml (gitignored) and fill in your own paths.
-# Scripts read paths from here or from command-line arguments. Never hardcode them.
-hcp_root: "R:/PATH/TO/HCP/ZIPS"      # folder holding the per-subject task zips
-scratch_dir: "~/scratch"             # temporary extraction folder (deleted after use)
-atlas_dlabel: "atlas/Glasser360_Subcortex14.dlabel.nii"
-parcel_lookup: "atlas/parcel_lookup.csv"

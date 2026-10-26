@@ -1,49 +1,40 @@
 # TaskfMRI
 
-Applying the **GDAR** (Graph Diffusion Autoregressive) model to human **HCP task-fMRI**
-(UW NERD Lab). Pipeline: dataset overview -> loader -> structural connectome/graph ->
-fit GDAR -> relate flow to task.
+Extract parcel-level BOLD time series from HCP task-fMRI CIFTI files using the combined
+**Glasser 360 cortical + 14 subcortical (374 parcel)** atlas.
 
-## Rules for this repo
-- **No HCP data in git.** No `.nii`, `.zip`, `.gii`, or extracted time series. HCP data use
-  terms don't allow redistribution, and GitHub rejects files over 100 MB.
-  Data stays on the lab remote desktop; code reads the path from `config.local.yaml`.
-- **No passwords or keys**, ever. A pushed secret stays in git history.
-- The atlas (`atlas/`) is the single source of truth for parcel definitions.
-  Don't silently change the 360 Glasser cortical parcels or their ordering.
+For each run, every parcel's signal is the plain mean of its grayordinates at each time point.
+Nothing is averaged across runs or subjects. Each run gets its own output (time x 374).
 
-## Setup
-```
-pip install -r requirements.txt
-cp config.example.yaml config.local.yaml   # then edit paths
-```
+## Needs
+- Python with `pip install -r requirements.txt`
+- HCP task zips (one per subject, e.g. `100206_Task3TRecommended.zip`), read-only
+- The atlas folder from Aya, placed next to the scripts as `Glasser374_Atlas/`
+  (needs `Glasser360_Subcortex14.dlabel.nii`, `parcel_lookup.csv`; `Glasser360_working.dlabel.nii`
+  is used for an optional cortex check). Not stored in this repo.
 
-## Layout
+## One run
 ```
-atlas/      combined cortical + subcortical atlas, parcel lookup, build script
-docs/       decisions.md (atlas choice, open questions), data_notes.md (facts about the data)
-src/        cifti_utils.py, extract_parcels.py (+ loader, graph, GDAR as they get added)
-scripts/    list_structures.py (CIFTI structure counts), check_atlas.py (atlas QC)
-tests/      tests run on a tiny fake CIFTI (make_fake_cifti.py), no HCP data needed
+python extract_parcels_one_run.py --zip "<subject zip>" --task MOTOR --phase LR ^
+    --atlas-dir ".\Glasser374_Atlas" --out ".\outputs\100206_MOTOR_LR"
 ```
+Stops if the scan and atlas don't describe the same grayordinates, then checks for NaNs,
+all-zero parcels and the Glasser-only cortex baseline. Saves `.npz` and `.csv`.
 
-## Quick checks
+## Many subjects / tasks
 ```
-python scripts/list_structures.py --zip <subject.zip> --subject 100206 --task MOTOR --phase LR
-python tests/make_fake_cifti.py out/fake      # makes fake_dtseries / fake_atlas
-pytest
+python extract_parcels_batch.py --zip-dir "<folder of zips>" --atlas-dir ".\Glasser374_Atlas" ^
+    --out-dir ".\outputs" --tasks MOTOR EMOTION
 ```
-
-## Your extraction job (Yousef)
-```
-# 1. do the real scan and the atlas describe the same grayordinates? (must say OK)
-python scripts/check_compat.py --dtseries scan.dtseries.nii --dlabel Glasser360_Subcortex14.dlabel.nii
-# 2. 374 parcel time series for one scan, with sanity checks + cortex baseline check
-python scripts/extract_subject.py --dtseries scan.dtseries.nii \
-    --dlabel Glasser360_Subcortex14.dlabel.nii --lookup parcel_lookup.csv \
-    --glasser-cortex Glasser360_working.dlabel.nii --out outputs/100206_MOTOR_LR
-```
-Outputs go to `outputs/` (gitignored). Atlas files come from Aya (see `atlas/README.md`).
+Saves `outputs/<subject>/<subject>_<TASK>_<PHASE>.npz` (arrays `ts` = time x 374, `parcel_ids`,
+`parcel_names`) and a log, `outputs/batch_log.csv`. Safe to re-run: finished runs are skipped.
+Use `--limit 2` to test on two subjects first. Assumes zips are named `*_Task3TRecommended.zip`.
 
 ## Status
-See `docs/decisions.md` for the atlas decision and open questions.
+- Checked on real HCP data: subject 100206 MOTOR LR (single-run script), and 2 subjects x all
+  14 runs (batch script): all checks passed.
+- Not yet checked: that the signals line up with the task events (EV files).
+
+## Rules
+- No HCP data, atlas source files, or outputs in git (see `.gitignore`).
+- No passwords or keys.
